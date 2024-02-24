@@ -13,7 +13,8 @@ use nix::{
     sys::inotify::{AddWatchFlags, InitFlags, Inotify, WatchDescriptor}
 };
 use serde::Deserialize;
-use directories_next::ProjectDirs;
+
+const USER_CFG_PATH: &'static str = "/etc/tiny-dfr/config.toml";
 
 pub struct Config {
     pub show_button_outlines: bool,
@@ -61,11 +62,9 @@ fn load_font(name: &str) -> FontFace {
 }
 
 fn load_config() -> (Config, [FunctionLayer; 2]) {
-    let config_dir = ProjectDirs::from("", "", "tiny-dfr").unwrap();
-    let user = read_to_string(config_dir.config_dir().join("config.toml")).map_err::<Error, _>(|e| e.into())
+    let mut base = toml::from_str::<ConfigProxy>(&read_to_string("/usr/share/tiny-dfr/config.toml").unwrap()).unwrap();
+    let user = read_to_string(USER_CFG_PATH).map_err::<Error, _>(|e| e.into())
         .and_then(|r| Ok(toml::from_str::<ConfigProxy>(&r)?));
-
-    let mut base = toml::from_str::<ConfigProxy>(&read_to_string("/etc/tiny-dfr/config.toml").unwrap()).unwrap();
     if let Ok(user) = user {
         base.media_layer_default = user.media_layer_default.or(base.media_layer_default);
         base.show_button_outlines = user.show_button_outlines.or(base.show_button_outlines);
@@ -95,9 +94,8 @@ pub struct ConfigManager {
 }
 
 fn arm_inotify(inotify_fd: &Inotify) -> Option<WatchDescriptor> {
-    let config_dir = ProjectDirs::from("", "", "tiny-dfr").unwrap();
     let flags = AddWatchFlags::IN_MOVED_TO | AddWatchFlags::IN_CLOSE | AddWatchFlags::IN_ONESHOT;
-    match inotify_fd.add_watch(&config_dir.config_dir().join("config.toml"), flags) {
+    match inotify_fd.add_watch(USER_CFG_PATH, flags) {
         Ok(wd) => Some(wd),
         Err(Errno::ENOENT) => None,
         e => Some(e.unwrap())
