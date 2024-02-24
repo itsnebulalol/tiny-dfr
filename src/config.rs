@@ -62,7 +62,7 @@ fn load_font(name: &str) -> FontFace {
 }
 
 fn load_config() -> (Config, [FunctionLayer; 2]) {
-    let mut base = toml::from_str::<ConfigProxy>(&read_to_string("/usr/share/tiny-dfr/config.toml").unwrap()).unwrap();
+    let mut base = toml::from_str::<ConfigProxy>(&read_to_string("/etc/tiny-dfr/out/config.toml").unwrap()).unwrap();
     let user = read_to_string(USER_CFG_PATH).map_err::<Error, _>(|e| e.into())
         .and_then(|r| Ok(toml::from_str::<ConfigProxy>(&r)?));
     if let Ok(user) = user {
