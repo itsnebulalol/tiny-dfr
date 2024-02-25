@@ -68,14 +68,14 @@ struct Button {
 }
 
 fn try_load_svg(path: &str) -> Result<ButtonImage> {
-    let handle = Loader::new().read_path(format!("/etc/tiny-dfr/{}.svg", path)).or_else(|_| {
+    let handle = Loader::new().read_path(format!("/etc/tiny-dfr/out/{}.svg", path)).or_else(|_| {
         Loader::new().read_path(format!("/usr/share/tiny-dfr/{}.svg", path))
     })?;
     Ok(ButtonImage::Svg(handle))
 }
 
 fn try_load_png(path: &str) -> Result<ButtonImage> {
-    let mut file = File::open(format!("/etc/tiny-dfr/{}.png", path)).or_else(|_| {
+    let mut file = File::open(format!("/etc/tiny-dfr/out/{}.png", path)).or_else(|_| {
         File::open(format!("/usr/share/tiny-dfr/{}.png", path))
     })?;
     let surf = ImageSurface::create_from_png(&mut file)?;
